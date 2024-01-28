@@ -1,12 +1,12 @@
 import lancedb
 from langchain_community.embeddings import GPT4AllEmbeddings
 from langchain_community.vectorstores import LanceDB
-from langchain.text_splitter import CharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import TextLoader, PyPDFLoader
 
 db = lancedb.connect("./lancedb")
 table = db.create_table(
-    "data",
+    "peter_griffin",
     data=[
         {
             "vector": GPT4AllEmbeddings().embed_query("hello world"),
@@ -17,11 +17,15 @@ table = db.create_table(
     mode="overwrite",
 )
 
-splitter = CharacterTextSplitter(chunk_size=1024, chunk_overlap=0)
+splitter = RecursiveCharacterTextSplitter(chunk_size=256, chunk_overlap=0)
 
-rawDoc = TextLoader("./docs/FakeWiki.txt").load()
+# rawDoc = TextLoader("./docs/FakeWiki.txt").load()
+
+rawDoc = PyPDFLoader('./docs/Peter_Griffin.pdf').load()
 
 documents = splitter.split_documents(rawDoc)
+
+print(len(documents))
 
 vectorStore = LanceDB(connection=table, embedding=GPT4AllEmbeddings())
 

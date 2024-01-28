@@ -8,14 +8,14 @@ from langchain_community.embeddings import GPT4AllEmbeddings
 
 db = lancedb.connect("./lancedb")
 
-table = db.open_table("data")
+table = db.open_table("Peter_Griffin")
 
 vectorStore = LanceDB(table, GPT4AllEmbeddings())
 
 localPath = ("./models/wizardlm-13b-v1.2.q4_0.gguf")
 
 template = """
-Use the following pieces of context and chat history to answer the questions.
+Answer the question in detail using the context provided.
 Context: {context}
 ---
 Chat history: {chat_history}
@@ -39,7 +39,12 @@ llm = GPT4All(
 
 qa = ConversationalRetrievalChain.from_llm(
     llm,
-    vectorStore.as_retriever(),
+    vectorStore.as_retriever(
+        search_type='similarity',
+        search_kwargs={
+            "k": 4
+        }
+    ),
     combine_docs_chain_kwargs={"prompt": prompt}
 )
 
@@ -50,5 +55,5 @@ while True:
     query = input("please enter your question: ")
     if query.lower() == 'exit':
         break
-    result = qa({"question": query, "chat_history": chat_history})
+    result = qa.invoke({"question": query, "chat_history": chat_history})
     print("\n")
